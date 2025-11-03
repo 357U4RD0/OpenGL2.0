@@ -36,24 +36,32 @@ MasterChief.visible = True
 
 rend.scene.append(MasterChief)
 
-vertexShaders = []
-fragmentShaders = []
+vertexShaders = [vertex_shader, fat_shader, water_shader]
+fragmentShaders = [fragment_shader, toon_shader, magma_shader]
 
 currentVertex = 0
 currentFragment = 0
 
-#rend.SetShaders(vertexShaders[currentVertex], fragmentShaders[currentFragment])
+rend.SetShaders(vertexShaders[currentVertex], fragmentShaders[currentFragment])
+
+# Inicializar rotación de cámara
+rend.camera.rotation = glm.vec3(0, 0, 0)
 
 isRunning = True
 
 while isRunning:
-	clock.tick(60)
+	deltaTime = clock.tick(60) / 1000
+	rend.elapsedTime += deltaTime
+	
+	keys = pygame.key.get_pressed()
+	mouseVel = pygame.mouse.get_rel()
 	
 	for event in pygame.event.get():
 		if event.type == pygame.QUIT:
 			isRunning = False
 		
 		elif event.type == pygame.KEYDOWN:
+			# Cambiar Vertex Shaders (1, 2, 3)
 			if event.key == pygame.K_1:
 				currentVertex = 0
 				rend.SetShaders(vertexShaders[currentVertex], fragmentShaders[currentFragment])
@@ -63,6 +71,8 @@ while isRunning:
 			elif event.key == pygame.K_3:
 				currentVertex = 2
 				rend.SetShaders(vertexShaders[currentVertex], fragmentShaders[currentFragment])
+			
+			# Cambiar Fragment Shaders (4, 5, 6)
 			elif event.key == pygame.K_4:
 				currentFragment = 0
 				rend.SetShaders(vertexShaders[currentVertex], fragmentShaders[currentFragment])
@@ -72,8 +82,32 @@ while isRunning:
 			elif event.key == pygame.K_6:
 				currentFragment = 2
 				rend.SetShaders(vertexShaders[currentVertex], fragmentShaders[currentFragment])
-
-	rend.elapsedTime += clock.get_time() / 1000.0
+	
+	# Movimiento WASD en XY
+	moveSpeed = 5
+	if keys[K_w]:
+		rend.camera.position.y += moveSpeed * deltaTime
+	if keys[K_s]:
+		rend.camera.position.y -= moveSpeed * deltaTime
+	if keys[K_a]:
+		rend.camera.position.x -= moveSpeed * deltaTime
+	if keys[K_d]:
+		rend.camera.position.x += moveSpeed * deltaTime
+	
+	# Zoom con Z y X
+	if keys[K_z]:
+		rend.camera.position.z += 5 * deltaTime
+	if keys[K_x]:
+		rend.camera.position.z -= 5 * deltaTime
+	
+	# Rotar cámara con click izquierdo + arrastrar
+	if pygame.mouse.get_pressed()[0]:
+		rend.camera.rotation.y -= mouseVel[0] * deltaTime * 50
+		rend.camera.rotation.x -= mouseVel[1] * deltaTime * 50
+		# Limitar rotación vertical
+		rend.camera.rotation.x = max(-89, min(89, rend.camera.rotation.x))
+	
+	rend.camera.Update()
 	rend.Render()
 	pygame.display.flip()
 
