@@ -106,9 +106,7 @@ class Renderer(object):
 
         self.camera.Update()
 
-        if self.skybox is not None:
-            self.skybox.Render()
-
+        # ACTIVAR SHADER DE LOS MODELOS PRIMERO
         if self.activeShader is not None:
             glUseProgram(self.activeShader)
 
@@ -126,19 +124,21 @@ class Renderer(object):
 
             glUniform1i( glGetUniformLocation(self.activeShader, "tex0"), 0)
             glUniform1i( glGetUniformLocation(self.activeShader, "tex1"), 1)
-            glUniform1i(glGetUniformLocation(self.activeShader, "tex2"), 2)
+            glUniform1i( glGetUniformLocation(self.activeShader, "tex2"), 2)
 
-
-
+        # RENDERIZAR MODELOS
         for obj in self.scene:
-
             if self.activeShader is not None:
                 glUniformMatrix4fv( glGetUniformLocation(self.activeShader, "modelMatrix"),
                                 1, GL_FALSE, glm.value_ptr( obj.GetModelMatrix() ) )
 
             obj.Render()
 
+        # SKYBOX AL FINAL (usa su propio shader)
+        if self.skybox is not None:
+            self.skybox.Render()
 
+        # POST-PROCESSING
         if self.active_postProcessing_Shader is not None:
             glBindFramebuffer(GL_FRAMEBUFFER, 0)
             glClear(GL_COLOR_BUFFER_BIT)

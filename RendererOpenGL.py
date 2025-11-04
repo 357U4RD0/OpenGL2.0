@@ -32,19 +32,39 @@ MasterChief.AddTexture("textures/m_70695387-6504-7cbe-0590-e640ab45d163_baseColo
 MasterChief.AddTexture("textures/m_fec53d62-b190-ebba-3617-4e25f7011c55_baseColor.png")
 MasterChief.position.z = -20
 MasterChief.rotation.y = 180
-MasterChief.visible = True
+MasterChief.visible = False
+
+Nave = Model("models/nave.obj")
+Nave.AddTexture("textures/nave_low_poly.png")
+Nave.position.z = -20
+Nave.rotation.y = 180
+Nave.visible = True
+
+print("="*50)
+print("POSICIÓN INICIAL:")
+print(f"Cámara: {rend.camera.position}")
+print(f"Modelo Z: {MasterChief.position.z}")
+print(f"Modelo visible: {MasterChief.visible}")
+print(f"Vértices del modelo: {MasterChief.vertexCount}")
+print(f"Texturas cargadas: {len(MasterChief.textures)}")
+print("="*50)
 
 rend.scene.append(MasterChief)
+rend.scene.append(Nave)
 
-vertexShaders = [vertex_shader, fat_shader, water_shader]
-fragmentShaders = [fragment_shader, toon_shader, magma_shader]
+vertexShaders = [pulse, wave, basic]
+fragmentShaders = [portal, plasma, cosmic]
 
 currentVertex = 0
 currentFragment = 0
 
 rend.SetShaders(vertexShaders[currentVertex], fragmentShaders[currentFragment])
 
-# Inicializar rotación de cámara
+print("Shader activo:", rend.activeShader)
+print("Modelo visible:", MasterChief.visible)
+print("Numero de shaders vertex:", len(vertexShaders))
+print("Numero de shaders fragment:", len(fragmentShaders))
+
 rend.camera.rotation = glm.vec3(0, 0, 0)
 
 isRunning = True
@@ -102,8 +122,8 @@ while isRunning:
 	
 	# Rotar cámara con click izquierdo + arrastrar
 	if pygame.mouse.get_pressed()[0]:
-		rend.camera.rotation.y -= mouseVel[0] * deltaTime * 50
-		rend.camera.rotation.x -= mouseVel[1] * deltaTime * 50
+		rend.camera.rotation.y -= mouseVel[0] * deltaTime * 20
+		rend.camera.rotation.x -= mouseVel[1] * deltaTime * 20
 		# Limitar rotación vertical
 		rend.camera.rotation.x = max(-89, min(89, rend.camera.rotation.x))
 	
