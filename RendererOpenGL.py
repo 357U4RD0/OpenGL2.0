@@ -33,6 +33,7 @@ currVertexShader = vertex_shader
 currFragmentShader = fragment_shader
 
 orbitDistance = 5.0  # Distancia radial de la cámara respecto al centro
+camHeight = 0.8  # Altura de la cámara
 
 rend.SetShaders(currVertexShader, currFragmentShader)
 
@@ -54,16 +55,42 @@ skyboxTextures = ["skybox/right.png",
 rend.CreateSkybox(skyboxTextures)
 print("Skybox cargado exitosamente!")
 
+# Lista para almacenar modelos y controlar cuál está activo
+models = []
+activeModelIndex = 0
+
 try:
     Nave = Model("models/nave.obj")
     Nave.AddTexture("textures/nave_low_poly.png")    
-    Nave.position = glm.vec3(0, -0.2, 0)
-    Nave.rotation.y = 180  # Que mire hacia la cámara al iniciar
+    Nave.position = glm.vec3(0, 0.2, 0)
+    Nave.rotation.y = 180
     Nave.scale = glm.vec3(1.0, 1.0, 1.0)
+    models.append(Nave)
     
-    rend.scene.append(Nave)
+    MasterChief = Model("models/ChiefMaster.obj")
+    MasterChief.AddTexture("textures/m_9bac2ffc-e51f-7210-2ba4-e09401d31fb3_baseColor.png")
+    MasterChief.AddTexture("textures/m_70695387-6504-7cbe-0590-e640ab45d163_baseColor.png")    
+    MasterChief.AddTexture("textures/m_fec53d62-b190-ebba-3617-4e25f7011c55_baseColor.png")    
+    MasterChief.position = glm.vec3(0, 0.2, 0)
+    MasterChief.rotation.y = 180 
+    MasterChief.scale = glm.vec3(1.0, 1.0, 1.0)
+    models.append(MasterChief)
+
+    Falcon = Model("models/falcon.obj")
+    Falcon.AddTexture("textures/default_baseColor.png")
+    Falcon.AddTexture("textures/default_metallicRoughness.png")    
+    Falcon.AddTexture("textures/default_normal.png")    
+    Falcon.position = glm.vec3(0, 0.2, 0)
+    Falcon.rotation.y = 180 
+    Falcon.scale = glm.vec3(2.0, 2.0, 2.0)
+    models.append(Falcon)
+    
+    # Solo añadir el primer modelo a la escena
+    rend.scene.append(models[activeModelIndex])
+    print(f"Modelo activo: {activeModelIndex + 1}/{len(models)}")
 
 except Exception as e:
+    print(f"Error cargando modelos: {e}")
     print("  Verifica que los modelos estén bien cargados")
 
 # Time and value uniforms for shaders
@@ -77,19 +104,21 @@ isRunning = True
 
 print("\nFRAGMENT SHADERS:")
 print("  1 - Default fragment shader (with lighting)")
-print("  2 - Hologram shader")
-print("  3 - Plasma/Fire shader")
-print("  4 - Matrix Digital Rain shader")
+print("  2 - Neon shader")
+print("  3 - Kaleidoscope shader")
+print("  4 - Iridescent shader")
 print("VERTEX SHADERS:")
-print("  7 - Default vertex shader")
-print("  8 - Spiral/Twist shader")
-print("  9 - Pulse/Heartbeat shader")
-print("  0 - Glitch/Displacement shader")
-print("\nCONTROLESS:")
-print("  Click IZQUIERDO/DERECHO - Rotate camera")
-print("  Mouse Wheel - Zoom in/out")
-print("  SPACE - Auto-rotate camera")
-print("  ESC - Quit")
+print("  5 - Default vertex shader")
+print("  6 - Wave shader")
+print("  7 - Vortex shader")
+print("  8 - Explode shader")
+print("\nCONTROLES:")
+print("  Flecha IZQUIERDA/DERECHA - Cambiar modelo")
+print("  Flecha ARRIBA/ABAJO - Subir/bajar cámara")
+print("  Click IZQUIERDO/DERECHO - Rotar cámara")
+print("  Rueda del mouse - Zoom in/out")
+print("  Espacio - Auto-rotar cámara horizontal")
+print("  ESC - Salir")
 print("=======================\n")
 
 autoRotate = False
@@ -121,7 +150,7 @@ while isRunning:
             elif event.key == pygame.K_3:
                 currFragmentShader = kaleidoscope
                 rend.SetShaders(currVertexShader, currFragmentShader)
-                print("Fragment Shader: Chromatic")
+                print("Fragment Shader: Kaleidoscope")
             
             elif event.key == pygame.K_4:
                 currFragmentShader = iridescent
@@ -129,29 +158,47 @@ while isRunning:
                 print("Fragment Shader: Iridescent")
             
             # Vertex shader selection
-            elif event.key == pygame.K_7:
+            elif event.key == pygame.K_5:
                 currVertexShader = vertex_shader
                 rend.SetShaders(currVertexShader, currFragmentShader)
                 print("Vertex Shader: Default")
             
-            elif event.key == pygame.K_8:
+            elif event.key == pygame.K_6:
                 currVertexShader = wave
                 rend.SetShaders(currVertexShader, currFragmentShader)
                 print("Vertex Shader: Wave")
             
-            elif event.key == pygame.K_9:
+            elif event.key == pygame.K_7:
                 currVertexShader = vortex
                 rend.SetShaders(currVertexShader, currFragmentShader)
                 print("Vertex Shader: Vortex")
             
-            elif event.key == pygame.K_0:
+            elif event.key == pygame.K_8:
                 currVertexShader = explode
                 rend.SetShaders(currVertexShader, currFragmentShader)
                 print("Vertex Shader: Explode")
             
-            elif event.key == pygame.K_f:
-                rend.ToggleFilledMode()
-                print("Wireframe mode:", "ON" if not rend.filledMode else "OFF")
+            # Cambiar modelo activo con flechas izquierda/derecha
+            elif event.key == pygame.K_LEFT:
+                if len(models) > 0:
+                    rend.scene.clear()
+                    activeModelIndex = (activeModelIndex - 1) % len(models)
+                    rend.scene.append(models[activeModelIndex])
+                    print(f"Modelo activo: {activeModelIndex + 1}/{len(models)}")
+            
+            elif event.key == pygame.K_RIGHT:
+                if len(models) > 0:
+                    rend.scene.clear()
+                    activeModelIndex = (activeModelIndex + 1) % len(models)
+                    rend.scene.append(models[activeModelIndex])
+                    print(f"Modelo activo: {activeModelIndex + 1}/{len(models)}")
+            
+            # Control de altura de cámara con flechas arriba/abajo
+            elif event.key == pygame.K_UP:
+                camHeight += 0.2
+
+            elif event.key == pygame.K_DOWN:
+                camHeight -= 0.2
             
             elif event.key == pygame.K_SPACE:
                 autoRotate = not autoRotate
@@ -163,17 +210,11 @@ while isRunning:
     deltaTime = clock.tick(60) / 1000
     elapsedTime += deltaTime
     
-    # Handle Z/X keys for value control
-    if keys[K_z]:
-        value = max(0.0, value - 1.0 * deltaTime)
-    if keys[K_x]:
-        value = min(2.0, value + 1.0 * deltaTime)
-    
     # Camera rotation with mouse
     if pygame.mouse.get_pressed()[0]:  # Left click
-        camAngle -= mouseVel[0] * deltaTime * 100
+        camAngle -= mouseVel[0] * deltaTime * 20
     if pygame.mouse.get_pressed()[2]:  # Right click
-        camAngle += mouseVel[0] * deltaTime * 100
+        camAngle += mouseVel[0] * deltaTime * 20
     
     # Auto-rotate
     if autoRotate:
@@ -187,7 +228,7 @@ while isRunning:
 
         rend.camera.position = glm.vec3(
             targetFocus.x + sin(radians(camAngle)) * distance,
-            targetFocus.y + 0.8,
+            targetFocus.y + camHeight,
             targetFocus.z + cos(radians(camAngle)) * distance
         )
 
@@ -196,8 +237,7 @@ while isRunning:
             targetFocus,
             glm.vec3(0, 1, 0)
         )
-        
-       
+    
     # Pass time and value to renderer
     rend.elapsedTime = elapsedTime
     rend.value = value
@@ -208,8 +248,6 @@ while isRunning:
     glFinish()
 
     err = glGetError()
-    if err != GL_NO_ERROR:
-        print(f"GL ERROR: {err}")
     if err != GL_NO_ERROR:
         print(f"GL ERROR: {err}")
     
