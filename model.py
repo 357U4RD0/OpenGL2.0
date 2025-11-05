@@ -116,7 +116,6 @@ class Model(object):
 
 
 	def Render(self):
-
 		if not self.visible:
 			return
 
@@ -125,11 +124,9 @@ class Model(object):
 			glActiveTexture(GL_TEXTURE0 + i)
 			glBindTexture(GL_TEXTURE_2D, self.textures[i])
 
-
 		self.posBuffer.Use(0, 3)
 		self.texCoordsBuffer.Use(1, 2)
 		self.normalsBuffer.Use(2, 3)
-
 
 		glDrawArrays(GL_TRIANGLES, 0, self.vertexCount)
 

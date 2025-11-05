@@ -81,13 +81,20 @@ class Renderer(object):
             glDisable(GL_CULL_FACE)
             glPolygonMode(GL_FRONT_AND_BACK, GL_LINE)
 
-
     def SetShaders(self, vertexShader, fragmentShader):
         if vertexShader is not None and fragmentShader is not None:
-            self.activeShader = compileProgram( compileShader(vertexShader, GL_VERTEX_SHADER),
-                                                compileShader(fragmentShader, GL_FRAGMENT_SHADER) )
+            try:
+                self.activeShader = compileProgram( 
+                    compileShader(vertexShader, GL_VERTEX_SHADER),
+                    compileShader(fragmentShader, GL_FRAGMENT_SHADER) 
+                )
+                print(f"SHADER COMPILADO OK: {self.activeShader}")
+            except Exception as e:
+                print(f"ERROR COMPILANDO SHADER: {e}")
+                self.activeShader = None
         else:
             self.activeShader = None
+            print("Shader es None")
 
 
     def SetPostProcessingShaders(self, vertexShader, fragmentShader):
@@ -126,13 +133,10 @@ class Renderer(object):
             glUniform1i( glGetUniformLocation(self.activeShader, "tex1"), 1)
             glUniform1i( glGetUniformLocation(self.activeShader, "tex2"), 2)
 
-        # RENDERIZAR MODELOS
-        for obj in self.scene:
-            if self.activeShader is not None:
+            for obj in self.scene:
                 glUniformMatrix4fv( glGetUniformLocation(self.activeShader, "modelMatrix"),
                                 1, GL_FALSE, glm.value_ptr( obj.GetModelMatrix() ) )
-
-            obj.Render()
+                obj.Render()
 
         # SKYBOX AL FINAL (usa su propio shader)
         if self.skybox is not None:
