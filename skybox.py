@@ -1,4 +1,3 @@
-
 from numpy import array, float32
 import glm
 from OpenGL.GL import * 

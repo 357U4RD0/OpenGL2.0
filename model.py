@@ -40,6 +40,40 @@ class Model(object):
 
 	def BuildBuffers(self):
 
+		# First pass: calculate bounding box and normalize to unit size
+		if len(self.objFile.vertices) > 0:
+			min_x = min_y = min_z = float('inf')
+			max_x = max_y = max_z = float('-inf')
+			for v in self.objFile.vertices:
+				min_x = min(min_x, v[0])
+				max_x = max(max_x, v[0])
+				min_y = min(min_y, v[1])
+				max_y = max(max_y, v[1])
+				min_z = min(min_z, v[2])
+				max_z = max(max_z, v[2])
+			
+			center_x = (min_x + max_x) / 2.0
+			center_y = (min_y + max_y) / 2.0
+			center_z = (min_z + max_z) / 2.0
+			size_x = max_x - min_x
+			size_y = max_y - min_y
+			size_z = max_z - min_z
+			max_size = max(size_x, size_y, size_z)
+			scale = 2.0 / max_size if max_size > 0 else 1.0
+			
+			print(f"Model bounds: X[{min_x:.3f}, {max_x:.3f}] Y[{min_y:.3f}, {max_y:.3f}] Z[{min_z:.3f}, {max_z:.3f}]")
+			print(f"Model size: {size_x:.3f} x {size_y:.3f} x {size_z:.3f}")
+			print(f"Normalization scale: {scale:.3f}")
+			
+			for v in self.objFile.vertices:
+				v[0] = (v[0] - center_x) * scale
+				v[1] = (v[1] - center_y) * scale
+				v[2] = (v[2] - center_z) * scale
+
+		# Create VAO
+		self.VAO = glGenVertexArrays(1)
+		glBindVertexArray(self.VAO)
+
 		positions = []
 		texCoords = []
 		normals = []
@@ -92,8 +126,19 @@ class Model(object):
 		self.texCoordsBuffer = Buffer(texCoords)
 		self.normalsBuffer = Buffer(normals)
 
+		print(f"Modelo '{getattr(self.objFile, 'name', 'N/A')}' -> vertices:{len(self.objFile.vertices)} faces:{len(self.objFile.faces)} bufferVertices:{self.vertexCount}")
+		
+		# Setup vertex attributes while VAO is bound
+		self.posBuffer.Use(0, 3)
+		self.texCoordsBuffer.Use(1, 2)
+		self.normalsBuffer.Use(2, 3)
+		
+		# Unbind VAO
+		glBindVertexArray(0)
+
 
 	def AddTexture(self, filename):
+		print(f"Cargando textura '{filename}'")
 		textureSurface = pygame.image.load(filename)
 		textureData = pygame.image.tostring(textureSurface, "RGB", True)
 
@@ -116,20 +161,23 @@ class Model(object):
 
 
 	def Render(self):
+
 		if not self.visible:
 			return
 
-		# Dar la textura
+		# Bind textures
 		for i in range(len(self.textures)):
 			glActiveTexture(GL_TEXTURE0 + i)
 			glBindTexture(GL_TEXTURE_2D, self.textures[i])
 
-		self.posBuffer.Use(0, 3)
-		self.texCoordsBuffer.Use(1, 2)
-		self.normalsBuffer.Use(2, 3)
+		# Bind VAO (contiene toda la configuración de atributos)
+		glBindVertexArray(self.VAO)
 
+		# Draw the model
 		glDrawArrays(GL_TRIANGLES, 0, self.vertexCount)
 
-		glDisableVertexAttribArray(0)
-		glDisableVertexAttribArray(1)
-		glDisableVertexAttribArray(2)
+		# Unbind VAO
+		glBindVertexArray(0)
+		
+		# Unbind texture
+		glBindTexture(GL_TEXTURE_2D, 0)
