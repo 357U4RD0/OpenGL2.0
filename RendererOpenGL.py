@@ -2,7 +2,7 @@ import pygame
 import pygame.display
 from pygame.locals import *
 from math import sin, cos, radians
-from OpenGL.GL import glFlush, glGetError, glFinish, GL_NO_ERROR
+from OpenGL.GL import glFinish, glGetError, GL_NO_ERROR
 import glm
 from gl import Renderer
 from model import Model
@@ -15,6 +15,12 @@ height = 540
 deltaTime = 0.0
 
 pygame.init()
+pygame.font.init()
+pygame.mixer.init()
+
+pygame.mixer.music.load("musica/Cancion.mp3")
+pygame.mixer.music.set_volume(0.7)
+musicPlaying = False
 
 screen = pygame.display.set_mode((width, height), pygame.DOUBLEBUF | pygame.OPENGL)
 pygame.display.set_caption("OpenGL Renderer 2025")
@@ -40,18 +46,19 @@ rend.camera.viewMatrix = glm.lookAt(
     glm.vec3(0, 1, 0)
 )
 
-skyboxTextures = ["skybox/right.png",
-                  "skybox/left.png",
-                  "skybox/top.png",
-                  "skybox/bottom.png",
-                  "skybox/front.png",
-                  "skybox/back.png"]
+skyboxTextures = [
+    "skybox/right.png",
+    "skybox/left.png",
+    "skybox/top.png",
+    "skybox/bottom.png",
+    "skybox/front.png",
+    "skybox/back.png"
+]
 
 rend.CreateSkybox(skyboxTextures)
-print("Skybox cargado exitosamente!")
 
 models = []
-activeModelIndex = 1 
+activeModelIndex = 1
 
 try:
     Nave = Model("models/nave.obj")
@@ -60,9 +67,8 @@ try:
     Nave.rotation.y = 215
     Nave.scale = glm.vec3(1.0)
     models.append(Nave)
-    print("Cargada: Nave")
-except Exception as e:
-    print(f"Error cargando Nave: {e}")
+except:
+    pass
 
 try:
     MasterChief = Model("models/ChiefMaster.obj")
@@ -73,9 +79,8 @@ try:
     MasterChief.rotation.y = 180
     MasterChief.scale = glm.vec3(1.0)
     models.append(MasterChief)
-    print("Cargado: MasterChief")
-except Exception as e:
-    print(f"Error cargando MasterChief: {e}")
+except:
+    pass
 
 try:
     Falcon = Model("models/falcon.obj")
@@ -86,9 +91,8 @@ try:
     Falcon.rotation.y = 155
     Falcon.scale = glm.vec3(2.3)
     models.append(Falcon)
-    print("Cargado: Falcon")
-except Exception as e:
-    print(f"Error cargando Falcon: {e}")
+except:
+    pass
 
 try:
     Planeta = Model("models/Planeta.obj")
@@ -97,9 +101,8 @@ try:
     Planeta.position = glm.vec3(-5.5, -0.8, -25)
     Planeta.scale = glm.vec3(5)
     models.append(Planeta)
-    print("Cargado: Planeta")
-except Exception as e:
-    print(f"Error cargando Planeta: {e}")
+except:
+    pass
 
 try:
     Espada = Model("models/Energy_sword.obj")
@@ -109,20 +112,18 @@ try:
     Espada.rotation.x = 45
     Espada.rotation.y = 180
     models.append(Espada)
-    print("Cargado: Espada")
-except Exception as e:
-    print(f"Error cargando Espada: {e}")
+except:
+    pass
 
 if len(models) == 0:
-    print("No se cargó ningún modelo.")
     pygame.quit()
     raise SystemExit("No models loaded.")
 
 for m in models:
     try:
         rend.scene.append(m)
-    except Exception as e:
-        print(f"Error añadiendo modelo a la escena: {e}")
+    except:
+        pass
 
 if len(models) > 0:
     if activeModelIndex < 0 or activeModelIndex >= len(models):
@@ -130,11 +131,8 @@ if len(models) > 0:
 else:
     activeModelIndex = 0
 
-print(f"Modelos cargados: {len(models)}. Cámara inicialmente sobre: {activeModelIndex + 1}")
-
 elapsedTime = 0.0
 value = 0.5
-
 camAngle = 0
 autoRotate = False
 
@@ -154,6 +152,9 @@ print("  Flecha ARRIBA/ABAJO - Subir/bajar cámara")
 print("  Click IZQUIERDO/DERECHO - Rotar cámara")
 print("  Rueda del mouse - Zoom")
 print("  Espacio - Auto-rotar")
+print("  M - Música")
+print("  K/L - Aumentar/Disminuir luz en modelos")
+print("  O/P - Aumentar/Disminuir efectos shaders")
 print("  ESC - Salir")
 print("=======================\n")
 
@@ -176,56 +177,69 @@ while isRunning:
             if event.key == pygame.K_1:
                 currFragmentShader = fragment_shader
                 rend.SetShaders(currVertexShader, currFragmentShader)
-                print("Fragment Shader: Default")
 
             elif event.key == pygame.K_2:
                 currFragmentShader = neon
                 rend.SetShaders(currVertexShader, currFragmentShader)
-                print("Fragment Shader: Neon")
 
             elif event.key == pygame.K_3:
                 currFragmentShader = kaleidoscope
                 rend.SetShaders(currVertexShader, currFragmentShader)
-                print("Fragment Shader: Kaleidoscope")
 
             elif event.key == pygame.K_4:
                 currFragmentShader = iridescent
                 rend.SetShaders(currVertexShader, currFragmentShader)
-                print("Fragment Shader: Iridescent")
 
             elif event.key == pygame.K_5:
                 currVertexShader = vertex_shader
                 rend.SetShaders(currVertexShader, currFragmentShader)
-                print("Vertex Shader: Default")
 
             elif event.key == pygame.K_6:
                 currVertexShader = wave
                 rend.SetShaders(currVertexShader, currFragmentShader)
-                print("Vertex Shader: Wave")
 
             elif event.key == pygame.K_7:
                 currVertexShader = vortex
                 rend.SetShaders(currVertexShader, currFragmentShader)
-                print("Vertex Shader: Vortex")
 
             elif event.key == pygame.K_8:
                 currVertexShader = explode
                 rend.SetShaders(currVertexShader, currFragmentShader)
-                print("Vertex Shader: Explode")
+
+            elif event.key == pygame.K_o:
+                value += 0.05
+                if value > 5: value = 5
+                rend.value = value
+
+            elif event.key == pygame.K_p:
+                value -= 0.05
+                if value < 0: value = 0
+                rend.value = value
+
+            elif event.key == pygame.K_k:
+                rend.ambientLight += 0.2
+                if rend.ambientLight > 2: rend.ambientLight = 2
+
+            elif event.key == pygame.K_l:
+                rend.ambientLight -= 0.2
+                if rend.ambientLight < 0: rend.ambientLight = 0
 
             elif event.key == pygame.K_LEFT:
-                if len(models) > 0:
-                    activeModelIndex = (activeModelIndex - 1) % len(models)
-                    print(f"Cámara orbitando: Modelo {activeModelIndex + 1}")
-                else:
-                    print("No hay modelos cargados para orbitar.")
+                activeModelIndex = (activeModelIndex - 1) % len(models)
 
             elif event.key == pygame.K_RIGHT:
-                if len(models) > 0:
-                    activeModelIndex = (activeModelIndex + 1) % len(models)
-                    print(f"Cámara orbitando: Modelo {activeModelIndex + 1}")
+                activeModelIndex = (activeModelIndex + 1) % len(models)
+
+            elif event.key == pygame.K_m:
+                if musicPlaying:
+                    pygame.mixer.music.pause()
+                    musicPlaying = False
                 else:
-                    print("No hay modelos cargados para orbitar.")
+                    if pygame.mixer.music.get_busy():
+                        pygame.mixer.music.unpause()
+                    else:
+                        pygame.mixer.music.play(-1)
+                    musicPlaying = True
 
             elif event.key == pygame.K_UP:
                 camHeight += 0.2
@@ -235,7 +249,6 @@ while isRunning:
 
             elif event.key == pygame.K_SPACE:
                 autoRotate = not autoRotate
-                print("Auto-rotate:", "ON" if autoRotate else "OFF")
 
             elif event.key == pygame.K_ESCAPE:
                 isRunning = False
@@ -281,10 +294,7 @@ while isRunning:
         print(f"Error en rend.Render(): {e}")
 
     glFinish()
-
     err = glGetError()
-    if err != GL_NO_ERROR:
-        print(f"GL ERROR: {err}")
 
     pygame.display.flip()
     clock.tick(60)
